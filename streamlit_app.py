@@ -38,6 +38,11 @@ if selected_sentiment == "Positive":
 elif selected_sentiment == "Negative":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
 
+# Convert start_date and end_date to Pandas Timestamp
+start_date = pd.to_datetime(start_date)  
+end_date = pd.to_datetime(end_date)  
+
+# Apply the date filter correctly
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
