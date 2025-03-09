@@ -81,3 +81,6 @@ else:
     summary = response['choices'][0]['message']['content']
     st.subheader("Summary of Feedback")
     st.write(summary)
+
+st.write(st.secrets)  # Debugging: check secrets
+openai.api_key = st.secrets["openai_api_key"]
