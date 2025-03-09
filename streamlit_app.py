@@ -75,7 +75,6 @@ else:
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
 
-pip install matplotlib.pyplot as plt
 
 # Plot date against sentiment_score
 st.subheader("Sentiment Over Time")
