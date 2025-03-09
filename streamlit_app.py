@@ -74,3 +74,26 @@ else:
             st.error("Rate limit exceeded. Please wait and try again.")
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
+
+import matplotlib.pyplot as plt
+
+# Plot date against sentiment_score
+st.subheader("Sentiment Over Time")
+
+# Convert 'Date of Review' to datetime if not already
+filtered_df['Date of Review'] = pd.to_datetime(filtered_df['Date of Review'])
+
+# Group data by date and average sentiment score
+daily_sentiment = filtered_df.groupby('Date of Review')['predicted_sentiment'].mean().reset_index()
+
+# Plot
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(daily_sentiment['Date of Review'], daily_sentiment['predicted_sentiment'], marker='o', color='b', linestyle='-', markersize=4)
+
+# Add labels and title
+ax.set_xlabel("Date")
+ax.set_ylabel("Average Sentiment Score")
+ax.set_title("Average Sentiment Score Over Time")
+
+# Show plot in Streamlit
+st.pyplot(fig)
