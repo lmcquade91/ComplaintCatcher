@@ -27,12 +27,13 @@ selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
 end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
 
-# Hide the index column and display the dataframe with a large height
+# Hide the index column and adjust row height using st.write
 st.subheader("Filtered Reviews")
-st.dataframe(filtered_df.reset_index(drop=True), use_container_width=True)  # Display full dataframe
+st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
 
-# Adjust the display with extra space for reviews
+# Dataset Statistics
 st.subheader("Dataset Statistics")
+st.write(filtered_df.describe())
 st.write(filtered_df.describe())
 
 if selected_sentiment == "Positive":
