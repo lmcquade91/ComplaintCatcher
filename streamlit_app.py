@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
+import os
 
 st.title("Hotel Review Sentiment Analysis Dashboard")
 st.write("Filter and analyze hotel reviews based on sentiment, category, and date.")
@@ -61,11 +62,9 @@ else:
     
     # Extract the reviews text from the filtered dataset
     reviews_text = " ".join(filtered_df['Review'].tolist())
-import openai
-import os
 
     # Make the AI call to summarize the feedback
-    openai.api_key = 'os.getenv("OPENAI_API_KEY")'  # Replace with your actual OpenAI API key
+    openai.api_key = os.getenv("OPENAI_API_KEY")  # Use the environment variable for the API key
     
     prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
     
@@ -82,5 +81,3 @@ import os
     summary = response['choices'][0]['message']['content']
     st.subheader("Summary of Feedback")
     st.write(summary)
-
-
