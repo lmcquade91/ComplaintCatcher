@@ -2,16 +2,9 @@ import streamlit as st
 import pandas as pd
 import openai
 
-# ✅ Debugging Step: Check if secrets are loaded correctly
-st.write("Loaded Secrets:", st.secrets)  # REMOVE THIS IN PRODUCTION
 
 # ✅ Set OpenAI API Key
-try:
     openai.api_key = st.secrets["openai_api_key"]
-    st.success("✅ OpenAI API Key Loaded Successfully")  # Debugging feedback
-except KeyError:
-    st.error("❌ OpenAI API Key NOT FOUND. Please check secrets configuration.")
-    st.stop()  # Stop execution if no API key
 
 # 🎯 Title
 st.title("Hotel Review Sentiment Analysis Dashboard")
