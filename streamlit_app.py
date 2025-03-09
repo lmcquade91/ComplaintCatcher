@@ -37,11 +37,11 @@ filtered_df = df.copy()
 if selected_category != "All":
     filtered_df = filtered_df[filtered_df["Category"] == selected_category]
 
-# Adjust sentiment filtering based on the -1 to 1 range
+# Adjust sentiment filtering based on the predicted_sentiment for display
 if selected_sentiment == "Positive":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
 elif selected_sentiment == "Negative":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] < 0]
+    filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
 
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
@@ -55,13 +55,13 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
-    # Sentiment over time (Line chart)
-    sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["predicted_sentiment"].mean()
+    # Sentiment over time (Line chart) - use sentiment_score for the graph
+    sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["sentiment_score"].mean()
     sentiment_over_time_df = sentiment_over_time.reset_index()
 
     st.subheader("Sentiment Score Over Time")
     fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=sentiment_over_time_df, x="Date of Review", y="predicted_sentiment", ax=ax, color='purple')
+    sns.lineplot(data=sentiment_over_time_df, x="Date of Review", y="sentiment_score", ax=ax, color='purple')
     ax.set_title("Average Sentiment Score per Day", fontsize=16)
     ax.set_xlabel("Date", fontsize=12)
     ax.set_ylabel("Sentiment Score", fontsize=12)
