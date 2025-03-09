@@ -64,7 +64,7 @@ else:
     reviews_text = " ".join(filtered_df['Review'].tolist())
 
     # Make the AI call to summarize the feedback
-    openai.api_key = os.getenv("OPENAI_API_KEY")  # Use the environment variable for the API key
+    openai.api_key = os.getenv("OPENAI_API_KEY")  # Ensure your environment variable is set correctly
     
     prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
     
