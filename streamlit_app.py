@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import openai
 
 st.title("Hotel Review Sentiment Analysis Dashboard")
 st.write("Filter and analyze hotel reviews based on sentiment, category, and date.")
@@ -54,10 +55,32 @@ filtered_df = filtered_df[
 if filtered_df.empty:
     st.write("No data to display.")
 else:
-    # Display results
+    # Display filtered reviews
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
+    
+    # Extract the reviews text from the filtered dataset
+    reviews_text = " ".join(filtered_df['Review'].tolist())
+import openai
+import os
 
-    st.subheader("Dataset Statistics")
-    st.write(filtered_df.describe())
+    # Make the AI call to summarize the feedback
+    openai.api_key = 'os.getenv("OPENAI_API_KEY")'  # Replace with your actual OpenAI API key
+    
+    prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
+    
+    # Make the API call to GPT-4 for summarization
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    # Extract and display the summary
+    summary = response['choices'][0]['message']['content']
+    st.subheader("Summary of Feedback")
+    st.write(summary)
+
 
