@@ -75,24 +75,3 @@ else:
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
 
-import matplotlib.pyplot as plt
-
-# Plot date against sentiment_score for all reviews in the filtered dataframe
-st.subheader("Sentiment Scores Over Time")
-
-# Ensure 'Date of Review' is in datetime format
-filtered_df['Date of Review'] = pd.to_datetime(filtered_df['Date of Review'])
-
-# Plot each sentiment score against the review date
-fig, ax = plt.subplots(figsize=(10, 6))
-
-# Scatter plot or line plot to show individual sentiment scores over time
-ax.plot(filtered_df['Date of Review'], filtered_df['predicted_sentiment'], marker='o', color='b', linestyle='-', markersize=4)
-
-# Add labels and title
-ax.set_xlabel("Date")
-ax.set_ylabel("Sentiment Score")
-ax.set_title("Sentiment Scores Over Time (Individual Reviews)")
-
-# Show plot in Streamlit
-st.pyplot(fig)
