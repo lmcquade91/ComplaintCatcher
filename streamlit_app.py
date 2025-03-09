@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import openai
-import os
 
 st.title("Hotel Review Sentiment Analysis Dashboard")
 st.write("Filter and analyze hotel reviews based on sentiment, category, and date.")
@@ -63,9 +62,10 @@ else:
     # Extract the reviews text from the filtered dataset
     reviews_text = " ".join(filtered_df['Review'].tolist())
 
+    # Retrieve the API key from Streamlit secrets
+    openai.api_key = st.secrets["openai_api_key"]
+
     # Make the AI call to summarize the feedback
-    openai.api_key = os.getenv("OPENAI_API_KEY")  # Ensure your environment variable is set correctly
-    
     prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
     
     # Make the API call to GPT-4 for summarization
