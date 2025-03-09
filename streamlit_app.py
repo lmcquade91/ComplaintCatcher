@@ -67,14 +67,17 @@ else:
 
     prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
     
-    # Make the API call to GPT-3.5 for summarization (using the correct API method)
-    response = openai.Completion.create(
-        model="text-davinci-003",  # Or use the most suitable model for your task
-        prompt=prompt,
-        max_tokens=150  # Adjust tokens as needed
+    # Make the API call to GPT-4 for summarization
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
     )
     
     # Extract and display the summary
-    summary = response['choices'][0]['text']
+    summary = response['choices'][0]['message']['content']
     st.subheader("Summary of Feedback")
     st.write(summary)
+
