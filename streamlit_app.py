@@ -34,7 +34,7 @@ end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]
 # Apply the date filter correctly
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
-    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
+    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)]
 
 # Apply filters
 filtered_df = df.copy()
