@@ -23,9 +23,18 @@ selected_category = st.sidebar.selectbox("Select Category", ["All"] + categories
 sentiment_options = ["All", "Positive", "Negative"]
 selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
 
+# Convert start_date and end_date to Pandas Timestamp
+start_date = pd.to_datetime(start_date)  
+end_date = pd.to_datetime(end_date)  
+
 # Date range filter
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
 end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
+
+# Apply the date filter correctly
+filtered_df = filtered_df[
+    (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
+    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 
 # Apply filters
 filtered_df = df.copy()
