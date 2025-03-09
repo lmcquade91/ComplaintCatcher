@@ -1,38 +1,29 @@
 import streamlit as st
 import pandas as pd
 
-st.title("Hotel Review Sentiment Analysis Dashboard")
-st.write("Filter and analyze hotel reviews based on sentiment, category, and date.")
+# Assuming `filtered_df` is created somewhere in your code
+# For example, this is how you might load the data (you should replace this with your actual code)
+# filtered_df = pd.read_pickle('path_to_your_data.pkl')
 
-# Load data
-@st.cache_data
-def load_data():
-    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"  # Update if necessary
-    return pd.read_pickle(file_path)
+# Check the type of filtered_df
+st.write(f"Type of filtered_df: {type(filtered_df)}")
 
-df = load_data()
+# Check columns and first few rows of the dataframe
+st.write("Columns in filtered_df:", filtered_df.columns)
+st.write("First few rows of filtered_df:")
+st.write(filtered_df.head())
 
-# Sidebar filters
-st.sidebar.header("Filter Options")
-
-# Category filter
-categories = df["Category"].unique().tolist()
-selected_category = st.sidebar.selectbox("Select Category", ["All"] + categories)
-
-# Sentiment filter
-sentiment_options = ["All", "Positive", "Negative"]
-selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
-
-# Date range filter
-start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
-end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
-
-# Hide the index column and adjust row height using st.write
-st.subheader("Filtered Reviews")
-st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
+# Check if the dataframe is empty
+if filtered_df.empty:
+    st.write("No data to display.")
+else:
+    st.subheader("Filtered Reviews")
+    st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
 
 # Dataset Statistics
 st.subheader("Dataset Statistics")
+st.write(filtered_df.describe())
+
 st.write(filtered_df.describe())
 st.write(filtered_df.describe())
 
