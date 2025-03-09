@@ -57,7 +57,7 @@ else:
         reviews_text = " ".join(filtered_df['Review'].tolist())
         prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
         
-       try:
+    try:
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
