@@ -37,10 +37,11 @@ filtered_df = df.copy()
 if selected_category != "All":
     filtered_df = filtered_df[filtered_df["Category"] == selected_category]
 
+# Adjust sentiment filtering based on the -1 to 1 range
 if selected_sentiment == "Positive":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
 elif selected_sentiment == "Negative":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
+    filtered_df = filtered_df[filtered_df["predicted_sentiment"] < 0]
 
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
