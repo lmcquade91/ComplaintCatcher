@@ -112,3 +112,24 @@ ax.set_title("Distribution of Reviews by Category", fontsize=16)
 
 # Display the pie chart
 st.pyplot(fig)
+
+# Sentiment over time (Line chart) showing all categories for the selected filters
+st.subheader("Sentiment Score Over Time by Category")
+
+# Group by Date and Category, and calculate the mean sentiment score for each
+sentiment_over_time_by_category = filtered_df.groupby([pd.to_datetime(filtered_df["Date of Review"]).dt.date, "Category"])["sentiment_score"].mean()
+sentiment_over_time_by_category_df = sentiment_over_time_by_category.reset_index()
+
+# Create the plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Use seaborn to plot sentiment score over time for each category
+sns.lineplot(data=sentiment_over_time_by_category_df, x="Date of Review", y="sentiment_score", hue="Category", ax=ax, palette="Set2")
+
+# Set the title and labels
+ax.set_title("Average Sentiment Score per Day by Category", fontsize=16)
+ax.set_xlabel("Date", fontsize=12)
+ax.set_ylabel("Sentiment Score", fontsize=12)
+
+# Display the plot
+st.pyplot(fig)
