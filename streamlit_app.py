@@ -23,38 +23,41 @@ selected_category = st.sidebar.selectbox("Select Category", ["All"] + categories
 sentiment_options = ["All", "Positive", "Negative"]
 selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
 
-# Convert start_date and end_date to Pandas Timestamp
-start_date = pd.to_datetime(start_date)  
-end_date = pd.to_datetime(end_date)  
-
 # Date range filter
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
 end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
 
-# Apply the date filter correctly
-filtered_df = filtered_df[
-    (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
-    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)]
+# Convert start_date and end_date to Pandas Timestamps after input
+start_date = pd.to_datetime(start_date)
+end_date = pd.to_datetime(end_date)
 
 # Apply filters
 filtered_df = df.copy()
 
+# Category filter
 if selected_category != "All":
     filtered_df = filtered_df[filtered_df["Category"] == selected_category]
 
+# Sentiment filter
 if selected_sentiment == "Positive":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
 elif selected_sentiment == "Negative":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
 
+# Date filter
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
 
-# Display results
-st.subheader("Filtered Reviews")
-st.write(filtered_df)
+# Check if the dataframe is empty
+if filtered_df.empty:
+    st.write("No data to display.")
+else:
+    # Display results
+    st.subheader("Filtered Reviews")
+    st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
 
-st.subheader("Dataset Statistics")
-st.write(filtered_df.describe())
+    st.subheader("Dataset Statistics")
+    st.write(filtered_df.describe())
+
