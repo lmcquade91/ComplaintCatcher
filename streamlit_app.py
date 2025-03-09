@@ -52,20 +52,22 @@ else:
     # Generate summary button
     if st.button("Generate Summary"):
         st.write("Generating summary...")
-        openai.api_key = st.secrets["openai_api_key"]
+        
+        # Load API key from Streamlit secrets
+        client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
         
         reviews_text = " ".join(filtered_df['Review'].tolist())
         prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
         
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
                 ]
             )
-            summary = response['choices'][0]['message']['content']
+            summary = response.choices[0].message.content
             st.write(summary)
 
         except openai.RateLimitError:
