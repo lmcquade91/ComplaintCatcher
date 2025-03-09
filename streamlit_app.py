@@ -50,11 +50,14 @@ filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
-
-# Display results
-st.subheader("Filtered Reviews")
-st.write(filtered_df)
-
+# Check if the dataframe is empty
+if filtered_df.empty:
+    st.write("No data to display.")
+else:
+    st.subheader("Filtered Reviews")
+    st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
+    
+# Dataset Statistics
 st.subheader("Dataset Statistics")
 st.write(filtered_df.describe())
 
