@@ -77,23 +77,22 @@ else:
 
 import matplotlib.pyplot as plt
 
-# Plot date against sentiment_score
-st.subheader("Sentiment Over Time")
+# Plot date against sentiment_score for all reviews in the filtered dataframe
+st.subheader("Sentiment Scores Over Time")
 
-# Convert 'Date of Review' to datetime if not already
+# Ensure 'Date of Review' is in datetime format
 filtered_df['Date of Review'] = pd.to_datetime(filtered_df['Date of Review'])
 
-# Group data by date and average sentiment score
-daily_sentiment = filtered_df.groupby('Date of Review')['predicted_sentiment'].mean().reset_index()
-
-# Plot
+# Plot each sentiment score against the review date
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(daily_sentiment['Date of Review'], daily_sentiment['predicted_sentiment'], marker='o', color='b', linestyle='-', markersize=4)
+
+# Scatter plot or line plot to show individual sentiment scores over time
+ax.plot(filtered_df['Date of Review'], filtered_df['predicted_sentiment'], marker='o', color='b', linestyle='-', markersize=4)
 
 # Add labels and title
 ax.set_xlabel("Date")
-ax.set_ylabel("Average Sentiment Score")
-ax.set_title("Average Sentiment Score Over Time")
+ax.set_ylabel("Sentiment Score")
+ax.set_title("Sentiment Scores Over Time (Individual Reviews)")
 
 # Show plot in Streamlit
 st.pyplot(fig)
