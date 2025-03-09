@@ -92,3 +92,23 @@ else:
             st.error("Rate limit exceeded. Please wait and try again.")
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
+
+# Pie chart showing reviews by category for the selected filters
+st.subheader("Reviews by Category")
+
+# Filter the data for the selected time period and sentiment
+pie_data = filtered_df.copy()
+
+# Count the reviews by category
+category_counts = pie_data["Category"].value_counts()
+
+# Create the pie chart
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette("Set3", len(category_counts)))
+ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+# Set title for the pie chart
+ax.set_title("Distribution of Reviews by Category", fontsize=16)
+
+# Display the pie chart
+st.pyplot(fig)
