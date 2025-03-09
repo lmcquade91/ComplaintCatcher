@@ -75,6 +75,7 @@ else:
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
 
+pip install -r requirements.txt
 
 # Plot date against sentiment_score
 st.subheader("Sentiment Over Time")
