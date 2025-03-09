@@ -27,11 +27,12 @@ selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
 end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
 
-# Apply filters
-filtered_df = df.copy()
+# Hide the index column and adjust row height
+st.subheader("Filtered Reviews")
+st.dataframe(filtered_df.reset_index(drop=True), height=600)  # Adjust height as needed
 
-if selected_category != "All":
-    filtered_df = filtered_df[filtered_df["Category"] == selected_category]
+st.subheader("Dataset Statistics")
+st.write(filtered_df.describe())
 
 if selected_sentiment == "Positive":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
