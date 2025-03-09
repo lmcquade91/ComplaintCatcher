@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import openai
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Load data
 @st.cache_data
@@ -9,6 +11,9 @@ def load_data():
     return pd.read_pickle(file_path)
 
 df = load_data()
+
+# Title with custom font styling
+st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Key Insights per Category for Hotel Reviews</h1>", unsafe_allow_html=True)
 
 # Sidebar filters
 st.sidebar.header("Filter Options")
@@ -49,6 +54,18 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
+    # Sentiment over time (Line chart)
+    sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["predicted_sentiment"].mean()
+    sentiment_over_time_df = sentiment_over_time.reset_index()
+
+    st.subheader("Sentiment Score Over Time")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=sentiment_over_time_df, x="Date of Review", y="predicted_sentiment", ax=ax, color='purple')
+    ax.set_title("Average Sentiment Score per Day", fontsize=16)
+    ax.set_xlabel("Date", fontsize=12)
+    ax.set_ylabel("Sentiment Score", fontsize=12)
+    st.pyplot(fig)
+
     # Generate summary button
     if st.button("Generate Summary"):
         st.write("Generating summary...")
@@ -74,4 +91,3 @@ else:
             st.error("Rate limit exceeded. Please wait and try again.")
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
-
