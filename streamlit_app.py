@@ -64,7 +64,7 @@ else:
     st.write(filtered_df.reset_index(drop=True))
 
     # Sentiment over time (Interactive Line Chart using Plotly)
-    sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.date)["sentiment_score"].mean()
+    sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
     sentiment_over_time_df = sentiment_over_time.reset_index()
 
     st.subheader("Sentiment Score Over Time")
