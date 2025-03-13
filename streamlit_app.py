@@ -5,6 +5,9 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Set page title and icon (add this before any other Streamlit code)
+st.set_page_config(page_title="ComplaintCatcher", page_icon=":guardsman:", layout="wide")
+
 # Load data
 @st.cache_data
 def load_data():
