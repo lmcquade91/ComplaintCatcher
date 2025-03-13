@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # Load data
 @st.cache_data
 def load_data():
-    file_path = r"C:\Users\User\OneDrive\Desktop\REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
+    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
     df = pd.read_pickle(file_path)
     df = df.drop(columns=["HUMAN LABEL", "embeddings"], errors="ignore")  # Hide unwanted columns
     return df
