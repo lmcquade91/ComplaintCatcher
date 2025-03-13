@@ -56,23 +56,27 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
-    # Sentiment over time (Interactive Line Chart using Plotly)
-    sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
+    # Ensure 'Date of Review' is a datetime type
+filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
 
-    # Reset the index and convert period to datetime for plotting
-    sentiment_over_time_df = sentiment_over_time.reset_index()
-    sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+# Sentiment over time (Interactive Line Chart using Plotly)
+sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
 
-    # Check if the DataFrame is empty
-    if sentiment_over_time_df.empty:
-        st.write("No data available to display.")
-    else:
-        # Create the plot
-        fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", 
-                      title="Average Sentiment Score per Week", labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
-                      markers=True, line_shape="spline")
-        # Display the plot
-        st.plotly_chart(fig)
+# Reset the index and convert period to datetime for plotting
+sentiment_over_time_df = sentiment_over_time.reset_index()
+sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+
+# Check if the DataFrame is empty
+if sentiment_over_time_df.empty:
+    st.write("No data available to display.")
+else:
+    # Create the plot
+    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", 
+                  title="Average Sentiment Score per Week", labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
+                  markers=True, line_shape="spline")
+    # Display the plot
+    st.plotly_chart(fig)
+        
 
     # Generate summary button
     if st.button("Generate Summary"):
