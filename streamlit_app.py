@@ -3,7 +3,6 @@ import pandas as pd
 import openai
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly.express as px
 
 # Load data
 @st.cache_data
@@ -19,7 +18,6 @@ st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Key Insights per Ca
 # Sidebar filters
 st.sidebar.header("Filter Options")
 
-# Allow multiple category selection
 categories = df["Category"].unique().tolist()
 selected_categories = st.sidebar.multiselect("Select Categories", categories, default=categories)
 
@@ -36,7 +34,6 @@ end_date = pd.to_datetime(end_date)
 # Apply filters
 filtered_df = df.copy()
 
-# Filter by selected categories
 if selected_categories:
     filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
 
@@ -58,17 +55,15 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
-    # Sentiment over time (Line chart) - use sentiment_score for the graph
+    # Sentiment over time (Interactive Line chart)
+    import plotly.express as px
+    
     sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["sentiment_score"].mean()
     sentiment_over_time_df = sentiment_over_time.reset_index()
-
+    
     st.subheader("Sentiment Score Over Time")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=sentiment_over_time_df, x="Date of Review", y="sentiment_score", ax=ax, color='purple')
-    ax.set_title("Average Sentiment Score per Day", fontsize=16)
-    ax.set_xlabel("Date", fontsize=12)
-    ax.set_ylabel("Sentiment Score", fontsize=12)
-    st.pyplot(fig)
+    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", title="Average Sentiment Score per Day", markers=True)
+    st.plotly_chart(fig)
 
     # Generate summary button
     if st.button("Generate Summary"):
