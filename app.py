@@ -1,83 +1,136 @@
 import streamlit as st
 import pandas as pd
 import openai
+import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-st.title("Hotel Review Sentiment Analysis Dashboard")
-st.write("Filter and analyze hotel reviews based on sentiment, category, and date.")
 
 # Load data
 @st.cache_data
 def load_data():
-    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"  # Update if necessary
-    return pd.read_pickle(file_path)
+    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
+    df = pd.read_pickle(file_path)
+    df = df.drop(columns=["HUMAN LABEL", "embeddings"], errors="ignore")  # Hide unwanted columns
+    return df
 
 df = load_data()
+
+# Title with custom font styling
+st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>ComplaintCatcher</h1>", unsafe_allow_html=True)
 
 # Sidebar filters
 st.sidebar.header("Filter Options")
 
-# Category filter
 categories = df["Category"].unique().tolist()
-selected_category = st.sidebar.selectbox("Select Category", ["All"] + categories)
+selected_categories = st.sidebar.multiselect("Select Categories", categories, default=categories)
 
-# Sentiment filter
 sentiment_options = ["All", "Positive", "Negative"]
 selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
 
-# Date range filter
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
 end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
 
-# Convert start_date and end_date to Pandas Timestamps after input
+# Convert to Pandas Timestamps
 start_date = pd.to_datetime(start_date)
 end_date = pd.to_datetime(end_date)
 
 # Apply filters
 filtered_df = df.copy()
+filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
 
-# Category filter
-if selected_category != "All":
-    filtered_df = filtered_df[filtered_df["Category"] == selected_category]
-
-# Sentiment filter
+# Adjust sentiment filtering based on the predicted_sentiment for display
 if selected_sentiment == "Positive":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
 elif selected_sentiment == "Negative":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
 
-# Date filter
 filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
 
-# Check if the dataframe is empty
+# Display data
 if filtered_df.empty:
     st.write("No data to display.")
 else:
-    # Display filtered reviews
     st.subheader("Filtered Reviews")
-    st.write(filtered_df.reset_index(drop=True))  # Display full dataframe without index
-    
-    # Extract the reviews text from the filtered dataset
-    reviews_text = " ".join(filtered_df['Review'].tolist())
+    st.write(filtered_df.reset_index(drop=True))
 
-    # Make the AI call to summarize the feedback
-    openai.api_key = st.secrets["openai_api_key"]  # Get the OpenAI API key from the secrets
+    # Ensure 'Date of Review' is a datetime type
+filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
 
-    prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
-    
-    # Make the API call to GPT-4 for summarization
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
-    # Extract and display the summary
-    summary = response['choices'][0]['message']['content']
-    st.subheader("Summary of Feedback")
-    st.write(summary)
+# Sentiment over time (Interactive Line Chart using Plotly)
+sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
 
+# Reset the index and convert period to datetime for plotting
+sentiment_over_time_df = sentiment_over_time.reset_index()
+sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+
+# Check if the DataFrame is empty
+if sentiment_over_time_df.empty:
+    st.write("No data available to display.")
+else:
+    # Create the plot
+    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", 
+                  title="Average Sentiment Score per Week", labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
+                  markers=True, line_shape="spline")
+    # Display the plot
+    st.plotly_chart(fig)
+        
+
+    # Generate summary button
+    if st.button("Generate Summary"):
+        st.write("Generating summary...")
+        
+        # Load API key from Streamlit secrets
+        client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
+        
+        reviews_text = " ".join(filtered_df['Review'].tolist())
+        prompt = f"Please summarize the following hotel reviews into ten bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            summary = response.choices[0].message.content
+            st.write(summary)
+
+        except openai.RateLimitError:
+            st.error("Rate limit exceeded. Please wait and try again.")
+        except openai.OpenAIError as e:
+            st.error(f"OpenAI API Error: {str(e)}")
+
+# Pie chart showing reviews by category for the selected filters
+st.subheader("Reviews by Category")
+
+# Always show all categories in pie chart while applying date and sentiment filters
+pie_data = df.copy()
+
+if selected_sentiment == "Positive":
+    pie_data = pie_data[pie_data["predicted_sentiment"] > 0]
+elif selected_sentiment == "Negative":
+    pie_data = pie_data[pie_data["predicted_sentiment"] <= 0]
+
+pie_data = pie_data[
+    (pd.to_datetime(pie_data["Date of Review"]) >= start_date) &
+    (pd.to_datetime(pie_data["Date of Review"]) <= end_date)
+]
+
+# Count the reviews by category
+category_counts = pie_data["Category"].value_counts()
+
+# Create the pie chart
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette("Set3", len(category_counts)))
+ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+# Set title for the pie chart
+ax.set_title("Distribution of Reviews by Category", fontsize=16)
+
+# Display the pie chart
+st.pyplot(fig)
