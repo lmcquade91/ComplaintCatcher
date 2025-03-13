@@ -86,7 +86,7 @@ else:
         client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
         
         reviews_text = " ".join(filtered_df['Review'].tolist())
-        prompt = f"Please summarize the following hotel reviews in bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
+        prompt = f"Please summarize the following hotel reviews into ten bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
         
         try:
             response = client.chat.completions.create(
