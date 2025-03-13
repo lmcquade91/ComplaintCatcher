@@ -5,7 +5,6 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 # Load data
 @st.cache_data
 def load_data():
