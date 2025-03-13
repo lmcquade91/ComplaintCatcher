@@ -1,14 +1,17 @@
 import streamlit as st
 import pandas as pd
 import openai
-import matplotlib.pyplot as plt
+import plotly.express as px
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load data
 @st.cache_data
 def load_data():
-    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
-    return pd.read_pickle(file_path)
+    file_path = r"C:\Users\User\OneDrive\Desktop\REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
+    df = pd.read_pickle(file_path)
+    df = df.drop(columns=["HUMAN LABEL", "embeddings"], errors="ignore")  # Hide unwanted columns
+    return df
 
 df = load_data()
 
@@ -33,9 +36,7 @@ end_date = pd.to_datetime(end_date)
 
 # Apply filters
 filtered_df = df.copy()
-
-if selected_categories:
-    filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
+filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
 
 # Adjust sentiment filtering based on the predicted_sentiment for display
 if selected_sentiment == "Positive":
@@ -55,14 +56,14 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
-    # Sentiment over time (Interactive Line chart)
-    import plotly.express as px
-    
+    # Sentiment over time (Interactive Line Chart using Plotly)
     sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["sentiment_score"].mean()
     sentiment_over_time_df = sentiment_over_time.reset_index()
-    
+
     st.subheader("Sentiment Score Over Time")
-    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", title="Average Sentiment Score per Day", markers=True)
+    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", title="Average Sentiment Score per Day",
+                  labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
+                  markers=True, line_shape="spline")
     st.plotly_chart(fig)
 
     # Generate summary button
@@ -94,8 +95,18 @@ else:
 # Pie chart showing reviews by category for the selected filters
 st.subheader("Reviews by Category")
 
-# Filter the data for the selected time period and sentiment
-pie_data = filtered_df.copy()
+# Always show all categories in pie chart while applying date and sentiment filters
+pie_data = df.copy()
+
+if selected_sentiment == "Positive":
+    pie_data = pie_data[pie_data["predicted_sentiment"] > 0]
+elif selected_sentiment == "Negative":
+    pie_data = pie_data[pie_data["predicted_sentiment"] <= 0]
+
+pie_data = pie_data[
+    (pd.to_datetime(pie_data["Date of Review"]) >= start_date) &
+    (pd.to_datetime(pie_data["Date of Review"]) <= end_date)
+]
 
 # Count the reviews by category
 category_counts = pie_data["Category"].value_counts()
