@@ -16,7 +16,7 @@ def load_data():
 df = load_data()
 
 # Title with custom font styling
-st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Key Insights per Category for Hotel Reviews</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>ComplaintCatcher</h1>", unsafe_allow_html=True)
 
 # Sidebar filters
 st.sidebar.header("Filter Options")
