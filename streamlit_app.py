@@ -44,9 +44,16 @@ if selected_sentiment == "Positive":
 elif selected_sentiment == "Negative":
     filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
 
+# Ensure the 'Date of Review' is properly converted to datetime
+filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
+
+# Filter out rows where 'Date of Review' is NaT after conversion
+filtered_df = filtered_df.dropna(subset=["Date of Review"])
+
+# Apply date filtering
 filtered_df = filtered_df[
-    (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
-    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
+    (filtered_df["Date of Review"] >= start_date) &
+    (filtered_df["Date of Review"] <= end_date)
 ]
 
 # Display data
@@ -57,7 +64,7 @@ else:
     st.write(filtered_df.reset_index(drop=True))
 
     # Sentiment over time (Interactive Line Chart using Plotly)
-    sentiment_over_time = filtered_df.groupby(pd.to_datetime(filtered_df["Date of Review"]).dt.date)["sentiment_score"].mean()
+    sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.date)["sentiment_score"].mean()
     sentiment_over_time_df = sentiment_over_time.reset_index()
 
     st.subheader("Sentiment Score Over Time")
