@@ -59,7 +59,10 @@ else:
 # Ensure 'Date of Review' is a datetime type
 df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Copy the data to retain all categories
+# Define the 6 main categories explicitly
+main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
+
+# Create a copy to ensure we keep all categories
 line_chart_data = df.copy()
 
 # Apply sentiment filter while keeping all categories
@@ -74,20 +77,29 @@ line_chart_data = line_chart_data[
     (line_chart_data["Date of Review"] <= end_date)
 ]
 
-# Group by date and category to calculate the average sentiment score
-sentiment_over_time = line_chart_data.groupby(
-    [line_chart_data["Date of Review"].dt.to_period("W"), "Category"]
-)["sentiment_score"].mean().reset_index()
+# Ensure all categories always appear, even if they have no data
+all_dates = pd.date_range(start=start_date, end=end_date, freq="W")  # Weekly intervals
+category_expansion = pd.MultiIndex.from_product([all_dates, main_categories], names=["Date of Review", "Category"])
 
-# Convert period to datetime for plotting
+# Group by Date & Category to calculate the average sentiment score
+sentiment_over_time = (
+    line_chart_data.groupby([line_chart_data["Date of Review"].dt.to_period("W"), "Category"])
+    ["sentiment_score"]
+    .mean()
+    .reset_index()
+)
+
+# Convert 'Date of Review' back to a datetime format for plotting
 sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
-# Ensure all categories are always present by pivoting and filling missing values
-main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
-sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score").reindex(columns=main_categories, fill_value=None)
+# Pivot to ensure all categories exist for all weeks, filling missing values with NaN
+sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score")
 
-# Reset index for Plotly
-sentiment_over_time = sentiment_over_time.reset_index().melt(id_vars=["Date of Review"], var_name="Category", value_name="Average Sentiment Score")
+# Reindex with all date-category combinations to ensure missing values don't remove lines
+sentiment_over_time = sentiment_over_time.reindex(category_expansion, fill_value=None).reset_index()
+
+# Convert back to long format for Plotly
+sentiment_over_time = sentiment_over_time.melt(id_vars=["Date of Review"], var_name="Category", value_name="Average Sentiment Score")
 
 # Check if the DataFrame is empty
 if sentiment_over_time.empty:
@@ -105,8 +117,6 @@ else:
 
     # Display the plot
     st.plotly_chart(fig)
-
-
 
 
     # Generate summary button
