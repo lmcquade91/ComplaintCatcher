@@ -59,49 +59,45 @@ else:
 # Ensure 'Date of Review' is a datetime type
 df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Filter only by date and category, keeping all sentiment types
+# Filter by selected date range (but keep all categories and sentiments)
 filtered_df = df[
-    (df["Category"].isin(selected_categories)) &
     (df["Date of Review"] >= start_date) &
     (df["Date of Review"] <= end_date)
 ]
 
-# Group by date and sentiment category to calculate average sentiment score
+# Group by date, category, and sentiment category
 sentiment_over_time = filtered_df.groupby(
-    [filtered_df["Date of Review"].dt.to_period("W"), "predicted_sentiment"]
-)["sentiment_score"].mean().unstack()
+    [filtered_df["Date of Review"].dt.to_period("W"), "Category", "predicted_sentiment"]
+)["sentiment_score"].mean().reset_index()
 
-# Reset index and convert period to datetime for plotting
-sentiment_over_time_df = sentiment_over_time.reset_index()
-sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+# Convert period to datetime for plotting
+sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
-# Melt the DataFrame for Plotly
-sentiment_over_time_df = sentiment_over_time_df.melt(id_vars=["Date of Review"], 
-                                                     var_name="Sentiment", 
-                                                     value_name="Average Sentiment Score")
-
-# Map numerical sentiment values to labels for better readability
+# Map numerical sentiment values to readable labels
 sentiment_labels = {0: "Negative", 2: "Positive"}
-sentiment_over_time_df["Sentiment"] = sentiment_over_time_df["Sentiment"].map(sentiment_labels)
+sentiment_over_time["predicted_sentiment"] = sentiment_over_time["predicted_sentiment"].map(sentiment_labels)
 
 # Check if the DataFrame is empty
-if sentiment_over_time_df.empty:
+if sentiment_over_time.empty:
     st.write("No data available to display.")
 else:
-    # Create the line chart with all sentiment categories
-    fig = px.line(sentiment_over_time_df, 
+    # Create the line chart with sentiment categories separated by color and hotel categories as different lines
+    fig = px.line(sentiment_over_time, 
                   x="Date of Review", 
-                  y="Average Sentiment Score", 
-                  color="Sentiment",
-                  title="Sentiment Score Over Time (All Categories)", 
-                  labels={"Average Sentiment Score": "Sentiment Score", "Date of Review": "Date"},
+                  y="sentiment_score", 
+                  color="predicted_sentiment",
+                  line_group="Category",
+                  title="Sentiment Score Over Time by Category", 
+                  labels={"sentiment_score": "Average Sentiment Score", 
+                          "Date of Review": "Date",
+                          "predicted_sentiment": "Sentiment",
+                          "Category": "Hotel Category"},
                   markers=True, 
                   line_shape="spline")
 
     # Display the plot
     st.plotly_chart(fig)
 
-        
 
     # Generate summary button
     if st.button("Generate Summary"):
