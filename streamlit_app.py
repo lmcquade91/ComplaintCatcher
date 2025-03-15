@@ -56,26 +56,51 @@ else:
     st.subheader("Filtered Reviews")
     st.write(filtered_df.reset_index(drop=True))
 
-    # Ensure 'Date of Review' is a datetime type
-filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
+# Ensure 'Date of Review' is a datetime type
+df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Sentiment over time (Interactive Line Chart using Plotly)
-sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
+# Filter only by date and category, keeping all sentiment types
+filtered_df = df[
+    (df["Category"].isin(selected_categories)) &
+    (df["Date of Review"] >= start_date) &
+    (df["Date of Review"] <= end_date)
+]
 
-# Reset the index and convert period to datetime for plotting
+# Group by date and sentiment category to calculate average sentiment score
+sentiment_over_time = filtered_df.groupby(
+    [filtered_df["Date of Review"].dt.to_period("W"), "predicted_sentiment"]
+)["sentiment_score"].mean().unstack()
+
+# Reset index and convert period to datetime for plotting
 sentiment_over_time_df = sentiment_over_time.reset_index()
 sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+
+# Melt the DataFrame for Plotly
+sentiment_over_time_df = sentiment_over_time_df.melt(id_vars=["Date of Review"], 
+                                                     var_name="Sentiment", 
+                                                     value_name="Average Sentiment Score")
+
+# Map numerical sentiment values to labels for better readability
+sentiment_labels = {0: "Negative", 2: "Positive"}
+sentiment_over_time_df["Sentiment"] = sentiment_over_time_df["Sentiment"].map(sentiment_labels)
 
 # Check if the DataFrame is empty
 if sentiment_over_time_df.empty:
     st.write("No data available to display.")
 else:
-    # Create the plot
-    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", 
-                  title="Average Sentiment Score per Week", labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
-                  markers=True, line_shape="spline")
+    # Create the line chart with all sentiment categories
+    fig = px.line(sentiment_over_time_df, 
+                  x="Date of Review", 
+                  y="Average Sentiment Score", 
+                  color="Sentiment",
+                  title="Sentiment Score Over Time (All Categories)", 
+                  labels={"Average Sentiment Score": "Sentiment Score", "Date of Review": "Date"},
+                  markers=True, 
+                  line_shape="spline")
+
     # Display the plot
     st.plotly_chart(fig)
+
         
 
     # Generate summary button
