@@ -59,32 +59,32 @@ else:
 # Ensure 'Date of Review' is a datetime type
 df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Define the 6 main categories explicitly
-main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
+# Copy the data to retain all categories
+line_chart_data = df.copy()
 
-# Filter by date range (but keep all 6 categories visible)
-filtered_df = df[
-    (df["Date of Review"] >= start_date) &
-    (df["Date of Review"] <= end_date) &
-    (df["Category"].isin(main_categories))  # Ensure only the 6 main categories are included
+# Apply sentiment filter while keeping all categories
+if selected_sentiment == "Positive":
+    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] > 0]
+elif selected_sentiment == "Negative":
+    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] <= 0]
+
+# Apply date filter
+line_chart_data = line_chart_data[
+    (line_chart_data["Date of Review"] >= start_date) &
+    (line_chart_data["Date of Review"] <= end_date)
 ]
 
-# Apply sentiment filtering if selected
-if selected_sentiment == "Positive":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
-elif selected_sentiment == "Negative":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
-
-# Group by date and category, calculating the average sentiment score for each category
-sentiment_over_time = filtered_df.groupby(
-    [filtered_df["Date of Review"].dt.to_period("W"), "Category"]
+# Group by date and category to calculate the average sentiment score
+sentiment_over_time = line_chart_data.groupby(
+    [line_chart_data["Date of Review"].dt.to_period("W"), "Category"]
 )["sentiment_score"].mean().reset_index()
 
 # Convert period to datetime for plotting
 sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
-# Ensure all 6 categories are always displayed (fill missing categories with NaN)
-sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score").reindex(columns=main_categories)
+# Ensure all categories are always present by pivoting and filling missing values
+main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
+sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score").reindex(columns=main_categories, fill_value=None)
 
 # Reset index for Plotly
 sentiment_over_time = sentiment_over_time.reset_index().melt(id_vars=["Date of Review"], var_name="Category", value_name="Average Sentiment Score")
@@ -105,6 +105,7 @@ else:
 
     # Display the plot
     st.plotly_chart(fig)
+
 
 
 
