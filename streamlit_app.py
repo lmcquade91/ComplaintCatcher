@@ -62,7 +62,7 @@ df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 # Define the 6 main categories explicitly
 main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
 
-# Create a copy to ensure we keep all categories
+# Copy data to ensure we retain all categories
 line_chart_data = df.copy()
 
 # Apply sentiment filter while keeping all categories
@@ -71,7 +71,7 @@ if selected_sentiment == "Positive":
 elif selected_sentiment == "Negative":
     line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] <= 0]
 
-# Apply date filter
+# Apply date filter (keeping all categories)
 line_chart_data = line_chart_data[
     (line_chart_data["Date of Review"] >= start_date) &
     (line_chart_data["Date of Review"] <= end_date)
@@ -117,6 +117,7 @@ else:
 
     # Display the plot
     st.plotly_chart(fig)
+
 
 
     # Generate summary button
