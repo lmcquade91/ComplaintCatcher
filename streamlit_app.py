@@ -77,10 +77,6 @@ line_chart_data = line_chart_data[
     (line_chart_data["Date of Review"] <= end_date)
 ]
 
-# Ensure all categories always appear, even if they have no data
-all_dates = pd.date_range(start=start_date, end=end_date, freq="W")  # Weekly intervals
-category_expansion = pd.MultiIndex.from_product([all_dates, main_categories], names=["Date of Review", "Category"])
-
 # Group by Date & Category to calculate the average sentiment score
 sentiment_over_time = (
     line_chart_data.groupby([line_chart_data["Date of Review"].dt.to_period("W"), "Category"])
@@ -92,31 +88,31 @@ sentiment_over_time = (
 # Convert 'Date of Review' back to a datetime format for plotting
 sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
-# Pivot to ensure all categories exist for all weeks, filling missing values with NaN
-sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score")
-
-# Reindex with all date-category combinations to ensure missing values don't remove lines
-sentiment_over_time = sentiment_over_time.reindex(category_expansion, fill_value=None).reset_index()
-
-# Convert back to long format for Plotly
-sentiment_over_time = sentiment_over_time.melt(id_vars=["Date of Review"], var_name="Category", value_name="Average Sentiment Score")
-
-# Check if the DataFrame is empty
+# Create the line chart with distinct colors for each category
 if sentiment_over_time.empty:
     st.write("No data available to display.")
 else:
-    # Create the line chart with all categories
-    fig = px.line(sentiment_over_time, 
-                  x="Date of Review", 
-                  y="Average Sentiment Score", 
-                  color="Category",
-                  title="Sentiment Score Over Time by Category", 
-                  labels={"Average Sentiment Score": "Sentiment Score", "Date of Review": "Date"},
-                  markers=True, 
-                  line_shape="spline")
-
-    # Display the plot
+    fig = px.line(
+        sentiment_over_time, 
+        x="Date of Review", 
+        y="sentiment_score", 
+        color="Category",
+        title="Sentiment Score Over Time by Category", 
+        labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
+        markers=True, 
+        line_shape="spline",
+        color_discrete_map={
+            "Staff/Service": "red",
+            "Room": "blue",
+            "Pool": "green",
+            "Hotel": "purple",
+            "Booking": "orange",
+            "Food & Beverage": "brown",
+            "Miscellaneous": "pink"
+        }
+    )
     st.plotly_chart(fig)
+
 
 
 
