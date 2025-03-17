@@ -62,26 +62,23 @@ df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 # Define the 6 main categories explicitly
 main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
 
-# Copy data to ensure we retain all categories
+# Apply filters similar to the pie chart logic
 line_chart_data = df.copy()
 
-# Apply sentiment filter while keeping all categories
 if selected_sentiment == "Positive":
     line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] > 0]
 elif selected_sentiment == "Negative":
     line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] <= 0]
 
-# Apply date filter (keeping all categories)
 line_chart_data = line_chart_data[
-    (line_chart_data["Date of Review"] >= start_date) &
-    (line_chart_data["Date of Review"] <= end_date)
+    (pd.to_datetime(line_chart_data["Date of Review"]) >= start_date) &
+    (pd.to_datetime(line_chart_data["Date of Review"]) <= end_date)
 ]
 
-# Group by Date & Category to calculate the average sentiment score
+# Count sentiment scores per category per week
 sentiment_over_time = (
     line_chart_data.groupby([pd.Grouper(key="Date of Review", freq="W"), "Category"])
-    ["sentiment_score"]
-    .mean()
+    .agg({"sentiment_score": "mean"})  # Aggregate by mean
     .reset_index()
 )
 
