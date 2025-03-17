@@ -21,7 +21,7 @@ st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>ComplaintCatcher</h
 # Sidebar filters
 st.sidebar.header("Filter Options")
 
-categories = df["Category"].unique().tolist()
+categories = df["Category"].dropna().unique().tolist()
 selected_categories = st.sidebar.multiselect("Select Categories", categories, default=categories)
 
 sentiment_options = ["All", "Positive", "Negative"]
@@ -59,9 +59,6 @@ else:
 # Ensure 'Date of Review' is a datetime type
 df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Define the 6 main categories explicitly
-main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
-
 # Apply filters similar to the pie chart logic
 line_chart_data = df.copy()
 
@@ -75,12 +72,19 @@ line_chart_data = line_chart_data[
     (pd.to_datetime(line_chart_data["Date of Review"]) <= end_date)
 ]
 
-# Count sentiment scores per category per week
+# Ensure 'Category' column is a string and drop any unexpected values
+line_chart_data = line_chart_data.dropna(subset=["Category"])
+line_chart_data = line_chart_data[line_chart_data["Category"] != "Category"]
+
+# Group by Date & Category to calculate the average sentiment score
 sentiment_over_time = (
-    line_chart_data.groupby([pd.Grouper(key="Date of Review", freq="W"), "Category"])
+    line_chart_data.groupby([pd.Grouper(key="Date of Review", freq="W"), "Category"], as_index=False)
     .agg({"sentiment_score": "mean"})  # Aggregate by mean
-    .reset_index()
+    .dropna(subset=["sentiment_score"])  # Remove NaN values
 )
+
+# Ensure 'sentiment_score' is numeric
+sentiment_over_time["sentiment_score"] = pd.to_numeric(sentiment_over_time["sentiment_score"], errors="coerce")
 
 # Create the line chart with distinct colors for each category
 if sentiment_over_time.empty:
@@ -106,6 +110,7 @@ else:
         }
     )
     st.plotly_chart(fig)
+
 
 
 
