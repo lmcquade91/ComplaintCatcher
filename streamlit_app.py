@@ -79,14 +79,11 @@ line_chart_data = line_chart_data[
 
 # Group by Date & Category to calculate the average sentiment score
 sentiment_over_time = (
-    line_chart_data.groupby([line_chart_data["Date of Review"].dt.to_period("W"), "Category"])
+    line_chart_data.groupby([pd.Grouper(key="Date of Review", freq="W"), "Category"])
     ["sentiment_score"]
     .mean()
     .reset_index()
 )
-
-# Convert 'Date of Review' back to a datetime format for plotting
-sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
 # Create the line chart with distinct colors for each category
 if sentiment_over_time.empty:
@@ -112,7 +109,6 @@ else:
         }
     )
     st.plotly_chart(fig)
-
 
 
 
