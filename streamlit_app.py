@@ -112,3 +112,53 @@ ax.set_title("Distribution of Reviews by Category", fontsize=16)
 
 # Display the pie chart
 st.pyplot(fig)
+
+
+# Convert date to datetime and extract week
+df["Week"] = pd.to_datetime(df["Date of Review"]).dt.to_period("W").astype(str)
+
+# Ensure all categories always show
+all_categories = df["Category"].unique()
+
+# Aggregate sentiment scores by week and category
+weekly_sentiment = df.groupby(["Week", "Category"])["sentiment_score"].mean().reset_index()
+
+# Pivot to ensure all categories appear even if missing for a week
+weekly_sentiment_pivot = weekly_sentiment.pivot(index="Week", columns="Category", values="sentiment_score").reset_index()
+
+# Fill missing values with 0 (or use NaN if you prefer)
+weekly_sentiment_pivot = weekly_sentiment_pivot.fillna(0)
+
+# Convert 'Week' column back to datetime for proper plotting
+weekly_sentiment_pivot["Week"] = pd.to_datetime(weekly_sentiment_pivot["Week"])
+
+# Streamlit visualization
+st.subheader("Sentiment Score Over Time by Category")
+
+# Filter based on user-selected time range
+filtered_weekly_sentiment = weekly_sentiment_pivot[
+    (weekly_sentiment_pivot["Week"] >= start_date) & 
+    (weekly_sentiment_pivot["Week"] <= end_date)
+]
+
+# Plot using Plotly Express
+fig = px.line(
+    filtered_weekly_sentiment, 
+    x="Week", 
+    y=all_categories, 
+    title="Weekly Sentiment Score by Category",
+    labels={"value": "Mean Sentiment Score", "Week": "Date"},
+    markers=True,  # Show points on the lines
+)
+
+# Custom colors (you can tweak this list to fit your style)
+fig.update_traces(line=dict(width=2))
+fig.update_layout(
+    legend_title="Category",
+    xaxis_title="Date",
+    yaxis_title="Sentiment Score",
+    template="plotly_white",
+)
+
+# Display the chart in Streamlit
+st.plotly_chart(fig)
