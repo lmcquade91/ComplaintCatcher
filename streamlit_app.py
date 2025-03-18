@@ -96,11 +96,6 @@ else:
     )
     st.plotly_chart(fig)
 
-
-
-
-
-
     # Generate summary button
     if st.button("Generate Summary"):
         st.write("Generating summary...")
