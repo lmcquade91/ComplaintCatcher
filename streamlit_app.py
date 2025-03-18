@@ -49,54 +49,39 @@ filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
 
-# Display data
-if filtered_df.empty:
-    st.write("No data to display.")
-else:
-    st.subheader("Filtered Reviews")
-    st.write(filtered_df.reset_index(drop=True))
-
 # Ensure 'Date of Review' is a datetime type
-df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
+filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
 
-# Apply filters similar to the pie chart logic
-line_chart_data = df.copy()
+# Group by Week and Category, then calculate mean sentiment score
+filtered_df["Week"] = filtered_df["Date of Review"].dt.to_period("W").astype(str)  # Convert to week period as a string
 
-if selected_sentiment == "Positive":
-    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] > 0]
-elif selected_sentiment == "Negative":
-    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] <= 0]
-
-line_chart_data = line_chart_data[
-    (pd.to_datetime(line_chart_data["Date of Review"]) >= start_date) &
-    (pd.to_datetime(line_chart_data["Date of Review"]) <= end_date)
-]
-
-# Ensure 'Category' column is a string and drop any unexpected values
-line_chart_data = line_chart_data.dropna(subset=["Category"])
-line_chart_data = line_chart_data[line_chart_data["Category"] != "Category"]
-
-# Group by Date & Category to calculate the average sentiment score
-sentiment_over_time = (
-    line_chart_data.groupby([pd.Grouper(key="Date of Review", freq="W"), "Category"], as_index=False)
-    .agg({"sentiment_score": "mean"})  # Aggregate by mean
-    .dropna(subset=["sentiment_score"])  # Remove NaN values
+weekly_sentiment = (
+    filtered_df.groupby(["Week", "Category"], as_index=False)
+    .agg({"sentiment_score": "mean"})
 )
 
-# Ensure 'sentiment_score' is numeric
-sentiment_over_time["sentiment_score"] = pd.to_numeric(sentiment_over_time["sentiment_score"], errors="coerce")
+# Convert 'Week' back to datetime format for proper plotting
+weekly_sentiment["Week"] = pd.to_datetime(weekly_sentiment["Week"])
+
+# Ensure all categories appear, even if missing some weeks
+all_weeks = pd.date_range(start=start_date, end=end_date, freq="W")
+category_expansion = pd.MultiIndex.from_product([all_weeks, selected_categories], names=["Week", "Category"])
+weekly_sentiment = weekly_sentiment.set_index(["Week", "Category"]).reindex(category_expansion).reset_index()
+
+# Fill missing sentiment scores with NaN to avoid misleading connections
+weekly_sentiment["sentiment_score"] = weekly_sentiment["sentiment_score"].astype(float)
 
 # Create the line chart with distinct colors for each category
-if sentiment_over_time.empty:
+if weekly_sentiment.empty:
     st.write("No data available to display.")
 else:
     fig = px.line(
-        sentiment_over_time, 
-        x="Date of Review", 
+        weekly_sentiment, 
+        x="Week", 
         y="sentiment_score", 
         color="Category",
         title="Sentiment Score Over Time by Category", 
-        labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
+        labels={"sentiment_score": "Sentiment Score", "Week": "Date"},
         markers=True, 
         line_shape="spline",
         color_discrete_map={
@@ -110,6 +95,7 @@ else:
         }
     )
     st.plotly_chart(fig)
+
 
 
 
