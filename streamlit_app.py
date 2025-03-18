@@ -97,7 +97,7 @@ else:
     st.plotly_chart(fig)
 
 # Generate summary button
-    if st.button("Generate Summary"):
+if st.button("Generate Summary"):
     st.write("Generating summary...")
     
     # Load API key from Streamlit secrets
