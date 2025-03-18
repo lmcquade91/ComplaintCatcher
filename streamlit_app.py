@@ -49,52 +49,7 @@ filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
 
-# Ensure 'Date of Review' is a datetime type
-filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
 
-# Group by Week and Category, then calculate mean sentiment score
-filtered_df["Week"] = filtered_df["Date of Review"].dt.to_period("W").astype(str)  # Convert to week period as a string
-
-weekly_sentiment = (
-    filtered_df.groupby(["Week", "Category"], as_index=False)
-    .agg({"sentiment_score": "mean"})
-)
-
-# Convert 'Week' back to datetime format for proper plotting
-weekly_sentiment["Week"] = pd.to_datetime(weekly_sentiment["Week"])
-
-# Ensure all categories appear, even if missing some weeks
-all_weeks = pd.date_range(start=start_date, end=end_date, freq="W")
-category_expansion = pd.MultiIndex.from_product([all_weeks, selected_categories], names=["Week", "Category"])
-weekly_sentiment = weekly_sentiment.set_index(["Week", "Category"]).reindex(category_expansion).reset_index()
-
-# Fill missing sentiment scores with NaN to avoid misleading connections
-weekly_sentiment["sentiment_score"] = weekly_sentiment["sentiment_score"].astype(float)
-
-# Create the line chart with distinct colors for each category
-if weekly_sentiment.empty:
-    st.write("No data available to display.")
-else:
-    fig = px.line(
-        weekly_sentiment, 
-        x="Week", 
-        y="sentiment_score", 
-        color="Category",
-        title="Sentiment Score Over Time by Category", 
-        labels={"sentiment_score": "Sentiment Score", "Week": "Date"},
-        markers=True, 
-        line_shape="spline",
-        color_discrete_map={
-            "Staff/Service": "red",
-            "Room": "blue",
-            "Pool": "green",
-            "Hotel": "purple",
-            "Booking": "orange",
-            "Food & Beverage": "brown",
-            "Miscellaneous": "pink"
-        }
-    )
-    st.plotly_chart(fig)
 
 
 
