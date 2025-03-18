@@ -1,19 +1,57 @@
-# 🎈 Blank app template
+🚀 ComplaintCatcher
+AI-Powered Sentiment Analysis for Hotel Reviews
+ComplaintCatcher is a data-driven application that helps hotels analyze guest reviews, identify key sentiment trends, and uncover areas for improvement using machine learning & NLP.
 
-A simple Streamlit app template for you to modify!
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+📌 Features
+✅ Sentiment Analysis – Classifies reviews as Positive, Negative, or Neutral
+✅ Category-Based Insights – Filters feedback by areas like Room, Pool, Staff, Booking
+✅ Trend Visualization – Displays sentiment scores over time for different categories
+✅ Keyword Extraction – Identifies the most frequently mentioned issues
+✅ User-Friendly Interface – Simple and interactive experience powered by Streamlit
 
-### How to run it on your own machine
+🛠️ Technologies Used
+Python
+Streamlit (Frontend)
+Pandas & NumPy (Data Processing)
+Plotly (Interactive Visualizations)
+OpenAI GPT (Theme Extraction & Summarization)
+Machine Learning Models (Sentiment Classification)
 
-1. Install the requirements
+📌 How to Run the App Locally
+1️⃣ Clone the repository
+bash
+Copy
+Edit
+git clone https://github.com/lmcquade91/ComplaintCatcher.git
+cd ComplaintCatcher
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+2️⃣ Create a virtual environment & install dependencies
+bash
+Copy
+Edit
+pip install -r requirements.txt
 
-2. Run the app
+3️⃣ Run the Streamlit app
+bash
+Copy
+Edit
+streamlit run streamlit_app.py
+4️⃣ Open http://localhost:8501/ in your browser.
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+🌍 Live Demo
+You can try out the live app here:
+🔗 ComplaintCatcher on Streamlit
+
+📝 How It Works
+Upload or Load Hotel Reviews
+Select Filters (Date Range, Sentiment Type, Review Category)
+View Insights:
+Sentiment Trends Over Time 📊
+Common Complaints & Praise 💬
+Summarized Themes 📝
+
+🛠️ Future Improvements
+🏨 Integrate real-time review streaming from Google Maps, TripAdvisor, etc.
+📊 Add predictive analytics to anticipate potential complaints.
+🎯 Improve sentiment classification accuracy with fine-tuned NLP models.
