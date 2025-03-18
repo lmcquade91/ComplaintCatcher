@@ -21,7 +21,7 @@ st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>ComplaintCatcher</h
 # Sidebar filters
 st.sidebar.header("Filter Options")
 
-categories = df["Category"].dropna().unique().tolist()
+categories = df["Category"].unique().tolist()
 selected_categories = st.sidebar.multiselect("Select Categories", categories, default=categories)
 
 sentiment_options = ["All", "Positive", "Negative"]
@@ -49,78 +49,102 @@ filtered_df = filtered_df[
     (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
 ]
 
+# Display data
+if filtered_df.empty:
+    st.write("No data to display.")
+else:
+    st.subheader("Filtered Reviews")
+    st.write(filtered_df.reset_index(drop=True))
+
 # Ensure 'Date of Review' is a datetime type
-filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
+df["Date of Review"] = pd.to_datetime(df["Date of Review"], errors="coerce")
 
-# Group by Week and Category, then calculate mean sentiment score
-filtered_df["Week"] = filtered_df["Date of Review"].dt.to_period("W").astype(str)  # Convert to week period as a string
+# Define the 6 main categories explicitly
+main_categories = ["Staff/Service", "Room", "Pool", "Hotel", "Booking", "Food & Beverage", "Miscellaneous"]
 
-weekly_sentiment = (
-    filtered_df.groupby(["Week", "Category"], as_index=False)
-    .agg({"sentiment_score": "mean"})
+# Copy data to ensure we retain all categories
+line_chart_data = df.copy()
+
+# Apply sentiment filter while keeping all categories
+if selected_sentiment == "Positive":
+    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] > 0]
+elif selected_sentiment == "Negative":
+    line_chart_data = line_chart_data[line_chart_data["predicted_sentiment"] <= 0]
+
+# Apply date filter (keeping all categories)
+line_chart_data = line_chart_data[
+    (line_chart_data["Date of Review"] >= start_date) &
+    (line_chart_data["Date of Review"] <= end_date)
+]
+
+# Ensure all categories always appear, even if they have no data
+all_dates = pd.date_range(start=start_date, end=end_date, freq="W")  # Weekly intervals
+category_expansion = pd.MultiIndex.from_product([all_dates, main_categories], names=["Date of Review", "Category"])
+
+# Group by Date & Category to calculate the average sentiment score
+sentiment_over_time = (
+    line_chart_data.groupby([line_chart_data["Date of Review"].dt.to_period("W"), "Category"])
+    ["sentiment_score"]
+    .mean()
+    .reset_index()
 )
 
-# Convert 'Week' back to datetime format for proper plotting
-weekly_sentiment["Week"] = pd.to_datetime(weekly_sentiment["Week"])
+# Convert 'Date of Review' back to a datetime format for plotting
+sentiment_over_time["Date of Review"] = sentiment_over_time["Date of Review"].dt.start_time
 
-# Ensure all categories appear, even if missing some weeks
-all_weeks = pd.date_range(start=start_date, end=end_date, freq="W")
-category_expansion = pd.MultiIndex.from_product([all_weeks, selected_categories], names=["Week", "Category"])
-weekly_sentiment = weekly_sentiment.set_index(["Week", "Category"]).reindex(category_expansion).reset_index()
+# Pivot to ensure all categories exist for all weeks, filling missing values with NaN
+sentiment_over_time = sentiment_over_time.pivot(index="Date of Review", columns="Category", values="sentiment_score")
 
-# Fill missing sentiment scores with NaN to avoid misleading connections
-weekly_sentiment["sentiment_score"] = weekly_sentiment["sentiment_score"].astype(float)
+# Reindex with all date-category combinations to ensure missing values don't remove lines
+sentiment_over_time = sentiment_over_time.reindex(category_expansion, fill_value=None).reset_index()
 
-# Create the line chart with distinct colors for each category
-if weekly_sentiment.empty:
+# Convert back to long format for Plotly
+sentiment_over_time = sentiment_over_time.melt(id_vars=["Date of Review"], var_name="Category", value_name="Average Sentiment Score")
+
+# Check if the DataFrame is empty
+if sentiment_over_time.empty:
     st.write("No data available to display.")
 else:
-    fig = px.line(
-        weekly_sentiment, 
-        x="Week", 
-        y="sentiment_score", 
-        color="Category",
-        title="Sentiment Score Over Time by Category", 
-        labels={"sentiment_score": "Sentiment Score", "Week": "Date"},
-        markers=True, 
-        line_shape="spline",
-        color_discrete_map={
-            "Staff/Service": "red",
-            "Room": "blue",
-            "Pool": "green",
-            "Hotel": "purple",
-            "Booking": "orange",
-            "Food & Beverage": "brown",
-            "Miscellaneous": "pink"
-        }
-    )
+    # Create the line chart with all categories
+    fig = px.line(sentiment_over_time, 
+                  x="Date of Review", 
+                  y="Average Sentiment Score", 
+                  color="Category",
+                  title="Sentiment Score Over Time by Category", 
+                  labels={"Average Sentiment Score": "Sentiment Score", "Date of Review": "Date"},
+                  markers=True, 
+                  line_shape="spline")
+
+    # Display the plot
     st.plotly_chart(fig)
 
-# Generate summary button
-if st.button("Generate Summary"):
-    st.write("Generating summary...")
-    
-    # Load API key from Streamlit secrets
-    client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
-    
-    reviews_text = " ".join(filtered_df['Review'].dropna().tolist())
-    prompt = f"Please summarize the following hotel reviews into ten bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
-    
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        summary = response.choices[0].message.content
-        st.write(summary)
 
-    except openai.RateLimitError:
-        st.error("Rate limit exceeded. Please wait and try again.")
-    except openai.OpenAIError as e:
-        st.error(f"OpenAI API Error: {str(e)}")
+
+    # Generate summary button
+    if st.button("Generate Summary"):
+        st.write("Generating summary...")
+        
+        # Load API key from Streamlit secrets
+        client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
+        
+        reviews_text = " ".join(filtered_df['Review'].tolist())
+        prompt = f"Please summarize the following hotel reviews into ten bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            summary = response.choices[0].message.content
+            st.write(summary)
+
+        except openai.RateLimitError:
+            st.error("Rate limit exceeded. Please wait and try again.")
+        except openai.OpenAIError as e:
+            st.error(f"OpenAI API Error: {str(e)}")
 
 # Pie chart showing reviews by category for the selected filters
 st.subheader("Reviews by Category")
