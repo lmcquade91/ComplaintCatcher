@@ -1,83 +1,50 @@
-import streamlit as st
-import pandas as pd
-import openai
-import plotly.express as px
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-
-# Load data
-@st.cache_data
-def load_data():
-    file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
-    df = pd.read_pickle(file_path)
-    df = df.drop(columns=["HUMAN LABEL", "embeddings"], errors="ignore")  # Hide unwanted columns
-    return df
-
-df = load_data()
-
-# Title with custom font styling
-st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>ComplaintCatcher</h1>", unsafe_allow_html=True)
-
-# Sidebar filters
-st.sidebar.header("Filter Options")
-
-categories = df["Category"].unique().tolist()
-selected_categories = st.sidebar.multiselect("Select Categories", categories, default=categories)
-
-sentiment_options = ["All", "Positive", "Negative"]
-selected_sentiment = st.sidebar.selectbox("Select Sentiment", sentiment_options)
-
-start_date = st.sidebar.date_input("Start Date", pd.to_datetime(df["Date of Review"]).min())
-end_date = st.sidebar.date_input("End Date", pd.to_datetime(df["Date of Review"]).max())
-
-# Convert to Pandas Timestamps
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
-
-# Apply filters
-filtered_df = df.copy()
-filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
-
-# Adjust sentiment filtering based on the predicted_sentiment for display
-if selected_sentiment == "Positive":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] > 0]
-elif selected_sentiment == "Negative":
-    filtered_df = filtered_df[filtered_df["predicted_sentiment"] <= 0]
-
-filtered_df = filtered_df[
-    (pd.to_datetime(filtered_df["Date of Review"]) >= start_date) &
-    (pd.to_datetime(filtered_df["Date of Review"]) <= end_date)
-]
-
-# Display data
-if filtered_df.empty:
-    st.write("No data to display.")
-else:
-    st.subheader("Filtered Reviews")
-    st.write(filtered_df.reset_index(drop=True))
-
-    # Ensure 'Date of Review' is a datetime type
+# Ensure 'Date of Review' is a datetime type
 filtered_df["Date of Review"] = pd.to_datetime(filtered_df["Date of Review"], errors="coerce")
 
-# Sentiment over time (Interactive Line Chart using Plotly)
-sentiment_over_time = filtered_df.groupby(filtered_df["Date of Review"].dt.to_period("W"))["sentiment_score"].mean()
+# Group by Week and Category, then calculate mean sentiment score
+filtered_df["Week"] = filtered_df["Date of Review"].dt.to_period("W").astype(str)  # Convert to week period as a string
 
-# Reset the index and convert period to datetime for plotting
-sentiment_over_time_df = sentiment_over_time.reset_index()
-sentiment_over_time_df["Date of Review"] = sentiment_over_time_df["Date of Review"].dt.start_time
+weekly_sentiment = (
+    filtered_df.groupby(["Week", "Category"], as_index=False)
+    .agg({"sentiment_score": "mean"})
+)
 
-# Check if the DataFrame is empty
-if sentiment_over_time_df.empty:
+# Convert 'Week' back to datetime format for proper plotting
+weekly_sentiment["Week"] = pd.to_datetime(weekly_sentiment["Week"])
+
+# Ensure all categories appear, even if missing some weeks
+all_weeks = pd.date_range(start=start_date, end=end_date, freq="W")
+category_expansion = pd.MultiIndex.from_product([all_weeks, selected_categories], names=["Week", "Category"])
+weekly_sentiment = weekly_sentiment.set_index(["Week", "Category"]).reindex(category_expansion).reset_index()
+
+# Fill missing sentiment scores with NaN to avoid misleading connections
+weekly_sentiment["sentiment_score"] = weekly_sentiment["sentiment_score"].astype(float)
+
+# Create the line chart with distinct colors for each category
+if weekly_sentiment.empty:
     st.write("No data available to display.")
 else:
-    # Create the plot
-    fig = px.line(sentiment_over_time_df, x="Date of Review", y="sentiment_score", 
-                  title="Average Sentiment Score per Week", labels={"sentiment_score": "Sentiment Score", "Date of Review": "Date"},
-                  markers=True, line_shape="spline")
-    # Display the plot
+    fig = px.line(
+        weekly_sentiment, 
+        x="Week", 
+        y="sentiment_score", 
+        color="Category",
+        title="Sentiment Score Over Time by Category", 
+        labels={"sentiment_score": "Sentiment Score", "Week": "Date"},
+        markers=True, 
+        line_shape="spline",
+        color_discrete_map={
+            "Staff/Service": "red",
+            "Room": "blue",
+            "Pool": "green",
+            "Hotel": "purple",
+            "Booking": "orange",
+            "Food & Beverage": "brown",
+            "Miscellaneous": "pink"
+        }
+    )
     st.plotly_chart(fig)
-        
+
 
     # Generate summary button
     if st.button("Generate Summary"):
