@@ -4,7 +4,7 @@ ComplaintCatcher is a data-driven application that helps hotels analyze guest re
 
 
 📌 Features
-✅ Sentiment Analysis – Classifies reviews as Positive, Negative, or Neutral
+✅ Sentiment Analysis – Classifies reviews as Positive or Negative
 ✅ Category-Based Insights – Filters feedback by areas like Room, Pool, Staff, Booking
 ✅ Trend Visualization – Displays sentiment scores over time for different categories
 ✅ Keyword Extraction – Identifies the most frequently mentioned issues
