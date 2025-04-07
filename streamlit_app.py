@@ -64,9 +64,29 @@ else:
         # Load API key from Streamlit secrets
         client = openai.OpenAI(api_key=st.secrets["openai_api_key"])
         
+        # Join all reviews into a single text block
         reviews_text = " ".join(filtered_df['Review'].tolist())
-        prompt = f"Please summarize the following hotel reviews into ten bullet points, highlighting key themes such as service, amenities, or any recurring issues:\n\n{reviews_text}"
         
+        # Convert selected categories into a readable string
+        if selected_categories:
+            if len(selected_categories) == 1:
+                category_focus = selected_categories[0]
+            else:
+                category_focus = ", ".join(selected_categories[:-1]) + " and " + selected_categories[-1]
+        else:
+            category_focus = "the selected category"
+
+        # Update the prompt to focus only on the selected category
+        prompt = f"""You are analyzing hotel guest reviews. 
+Summarize the following reviews into 10 concise bullet points, focusing only on feedback related to {category_focus}. 
+Ignore unrelated topics such as check-in, dining, or services not listed. 
+Highlight specific complaints, compliments, or recurring issues about {category_focus} only.
+
+Reviews:
+{reviews_text}
+"""
+
+        # Call the OpenAI API
         try:
             response = client.chat.completions.create(
                 model="gpt-4",
@@ -76,12 +96,14 @@ else:
                 ]
             )
             summary = response.choices[0].message.content
+            st.subheader("Summary")
             st.write(summary)
 
         except openai.RateLimitError:
             st.error("Rate limit exceeded. Please wait and try again.")
         except openai.OpenAIError as e:
             st.error(f"OpenAI API Error: {str(e)}")
+
 
 # Pie chart showing reviews by category for the selected filters
 st.subheader("Reviews by Category")
