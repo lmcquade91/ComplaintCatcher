@@ -1,4 +1,7 @@
 import streamlit as st
+
+st.write("App started successfully!")
+
 import pandas as pd
 import openai
 import plotly.express as px
