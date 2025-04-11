@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load data
-@st.cache_data
+# @st.cache_data
 def load_data():
     file_path = "REVIEWS_WITH_LABELS_AND_CATEGORY.pkl"
     df = pd.read_pickle(file_path)
